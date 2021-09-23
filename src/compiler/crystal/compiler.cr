@@ -166,6 +166,14 @@ module Crystal
       program = new_program(source)
       node = parse program, source
       node = program.semantic node, cleanup: !no_cleanup?
+      @progress_tracker.stage("Writing to temp") do
+        tempfile = File.tempfile("ast", ".cr")
+        puts "Writing everything in file #{tempfile.path}"
+        spawn do
+          Persistor.persist(tempfile, program, node)
+          tempfile.close
+        end
+      end
       result = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear

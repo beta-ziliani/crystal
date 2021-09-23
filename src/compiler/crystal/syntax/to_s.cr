@@ -3,9 +3,9 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io : IO) : Nil
-      to_s(io)
-    end
+    # def inspect(io : IO) : Nil
+    #   to_s(io)
+    # end
 
     def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
       visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
@@ -472,7 +472,7 @@ module Crystal
         end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
            StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
-           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA
+           ImplicitObj, IsA, Splat
         false
       when ArrayLiteral
         !!obj.of
@@ -864,8 +864,9 @@ module Crystal
       if @inside_lib && (name.is_a?(Path) && name.names.size == 1)
         case name.names.first
         when "Pointer"
+          @str << "Pointer("
           node.type_vars.first.accept self
-          @str << '*'
+          @str << ')'
           return false
         when "StaticArray"
           if node.type_vars.size == 2
@@ -965,7 +966,10 @@ module Crystal
       @str << keyword("yield")
       if node.exps.size > 0
         @str << ' '
-        node.exps.join(@str, ", ", &.accept self)
+        node.exps.join(@str, ", ") do |arg|
+          need_parens = need_parens(arg)
+          in_parenthesis(need_parens, arg)
+        end
       end
       false
     end
@@ -1151,10 +1155,15 @@ module Crystal
       end
       if node.args.size > 0
         @str << '('
+        i = 0
         node.args.join(@str, ", ") do |arg|
-          if arg_name = arg.name
-            @str << arg_name << " : "
+          if (arg_name = arg.name) && arg_name != ""
+            @str << arg_name
+          else
+            @str << "x" + i.to_s
+            i += 1
           end
+          @str << " : "
           arg.restriction.not_nil!.accept self
         end
         if node.varargs?
