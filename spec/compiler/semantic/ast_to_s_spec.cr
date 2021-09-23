@@ -64,8 +64,7 @@ describe "to_s a {{type.id}}" do
         end
       end
       )
-    s = Persistor.persist(sr.program, sr.node)
-    s.should eq <<-STR
+    sr.node.to_s.should eq <<-STR
       {{type.id}} A
         @@a = ""
         def self.a
@@ -81,8 +80,7 @@ describe "to_s a {{type.id}}" do
         A_CONST = ""
       end
       )
-    s = Persistor.persist(sr.program, sr.node)
-    s.should eq <<-STR
+    sr.node.to_s.should eq <<-STR
       {{type.id}} A
         A_CONST = ""
       end
@@ -97,8 +95,7 @@ describe "to_s a {{type.id}}" do
         end
       end
       )
-    s = Persistor.persist(sr.program, sr.node)
-    s.should eq <<-STR
+    sr.node.to_s.should eq <<-STR
       {{type.id}} A
         protected def a
           "this is protected"
@@ -112,8 +109,7 @@ describe "to_s a {{type.id}}" do
       private {{type.id}} A
       end
       )
-    s = Persistor.persist(sr.program, sr.node)
-    s.should eq <<-STR
+    sr.node.to_s.should eq <<-STR
       private {{type.id}} A
       end
       STR
@@ -126,9 +122,8 @@ describe "to_s a {{type.id}}" do
         end
       end
       )
-    s = Persistor.persist(sr.program, sr.node)
     # TODO: indentation is wrong
-    s.should eq <<-STR
+    sr.node.to_s.should eq <<-STR
       {{type.id}} A
         macro test
                 end
@@ -151,8 +146,7 @@ it "to_s a class including a module with an initialized variable" do
     include A
     end
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
+  sr.node.to_s.should eq <<-STR
     module A
       @a = ""
       def a
@@ -166,13 +160,20 @@ it "to_s a class including a module with an initialized variable" do
   # HACK: No idea why it needs that '\n' here
 end
 
-it "to_s the pointer type" do
+it "to_s the pointer type's" do
   sr = semantic %(
-    Pointer(Void)
+    struct Pointer(T)
+      def self.new
+      end
+    end
+    Pointer(Void).new
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
-    Pointer(Void)
+  sr.node.to_s.should eq <<-STR
+    struct Pointer(T)
+      def self.new
+      end
+    end
+    Pointer(Void).new\n
     STR
 end
 
@@ -183,8 +184,7 @@ it "to_s args, respecting the name" do
     end
     f a_name: "hi"
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
+  sr.node.to_s.should eq <<-STR
     def f(a_name : String)
       a_name
     end
@@ -199,8 +199,7 @@ it "to_s a splat" do
     end
     f "hi"
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
+  sr.node.to_s.should eq <<-STR
     def f(*elements)
       elements
     end
@@ -215,8 +214,7 @@ it "to_s default args" do
     end
     f
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
+  sr.node.to_s.should eq <<-STR
     def f(a_name = "hi")
       a_name
     end
@@ -231,11 +229,32 @@ it "to_s named args after a splat" do
     end
     f a_name: "hi"
     )
-  s = Persistor.persist(sr.program, sr.node)
-  s.should eq <<-STR
+  sr.node.to_s.should eq <<-STR
     def f(*, a_name : String)
       a_name
     end
     f(a_name: "hi")\n
+    STR
+end
+
+it "to_s a proc type" do
+  sr = semantic %(
+    Array((Int32, Int32) -> Int32)
+    )
+  sr.node.to_s.should eq <<-STR
+    Array((Int32, Int32) -> Int32)
+    STR
+end
+
+it "to_s a fun with unnamed args" do
+  sr = semantic %(
+    lib C
+      fun backtrace = _Unwind_Backtrace((Int32, Int32) -> Int32, Int32) : Int32
+    end
+    )
+  sr.node.to_s.should eq <<-STR
+    lib C
+      fun backtrace = _Unwind_Backtrace((Int32, Int32) -> Int32, Int32) : Int32
+    end
     STR
 end

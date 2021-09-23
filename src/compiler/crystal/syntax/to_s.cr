@@ -838,14 +838,12 @@ module Crystal
       @str << '('
       if inputs = node.inputs
         inputs.join(@str, ", ", &.accept self)
-        @str << ' '
       end
-      @str << "->"
+      @str << ") ->"
       if output = node.output
         @str << ' '
         output.accept self
       end
-      @str << ')'
       false
     end
 
@@ -1155,15 +1153,10 @@ module Crystal
       end
       if node.args.size > 0
         @str << '('
-        i = 0
         node.args.join(@str, ", ") do |arg|
           if (arg_name = arg.name) && arg_name != ""
-            @str << arg_name
-          else
-            @str << "x" + i.to_s
-            i += 1
+            @str << arg_name << " : "
           end
-          @str << " : "
           arg.restriction.not_nil!.accept self
         end
         if node.varargs?
