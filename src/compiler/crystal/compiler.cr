@@ -2,6 +2,7 @@ require "option_parser"
 require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
+require "./syntax/transformer"
 
 module Crystal
   @[Flags]
@@ -14,6 +15,15 @@ module Crystal
   enum Warnings
     All
     None
+  end
+
+  class ExpansionTransformer < Transformer
+    def transform(node : ExpandableNode)
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
   end
 
   # Main interface to the compiler.
@@ -67,6 +77,9 @@ module Crystal
 
     # If `true`, skip cleanup process on semantic analysis.
     property? no_cleanup = false
+
+    # If `true`, write result of semantic analysis to a file.
+    property? expand = false
 
     # If `true`, no executable will be generated after compilation
     # (useful to type-check a program)
@@ -165,15 +178,8 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
-      @progress_tracker.stage("Writing to temp") do
-        tempfile = File.tempfile("ast", ".cr")
-        puts "Writing everything in file #{tempfile.path}"
-        spawn do
-          Persistor.persist(tempfile, program, node)
-          tempfile.close
-        end
-      end
+      node = program.semantic node, cleanup: !no_cleanup?, inject_primitives: !expand?
+      expand(program, node, output_filename) if expand?
       result = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -181,6 +187,17 @@ module Crystal
       print_codegen_stats(result)
 
       Result.new program, node
+    end
+
+    def expand(program, node, output_filename)
+      node = ExpansionTransformer.new.transform node
+      expanded_file = output_filename + "-expanded.cr"
+
+      @progress_tracker.stage("Writing #{expanded_file}") do
+        File.open(expanded_file, "w") do |file|
+          Persistor.persist(file, program, node)
+        end
+      end
     end
 
     # Runs the semantic pass on the given source, without generating an

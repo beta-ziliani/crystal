@@ -837,13 +837,16 @@ module Crystal
     def visit(node : ProcNotation)
       @str << '('
       if inputs = node.inputs
+        @str << '('
         inputs.join(@str, ", ", &.accept self)
+        @str << ") "
       end
-      @str << ") ->"
+      @str << "->"
       if output = node.output
         @str << ' '
         output.accept self
       end
+      @str << ')'
       false
     end
 

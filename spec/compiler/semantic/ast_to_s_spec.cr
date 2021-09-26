@@ -242,7 +242,16 @@ it "to_s a proc type" do
     Array((Int32, Int32) -> Int32)
     )
   sr.node.to_s.should eq <<-STR
-    Array((Int32, Int32) -> Int32)
+    Array(((Int32, Int32) -> Int32))
+    STR
+end
+
+it "to_s a proc type with no domain" do
+  sr = semantic %(
+    Array( -> Int32)
+    )
+  sr.node.to_s.should eq <<-STR
+    Array((-> Int32))
     STR
 end
 
@@ -254,7 +263,31 @@ it "to_s a fun with unnamed args" do
     )
   sr.node.to_s.should eq <<-STR
     lib C
-      fun backtrace = _Unwind_Backtrace((Int32, Int32) -> Int32, Int32) : Int32
+      fun backtrace = _Unwind_Backtrace(((Int32, Int32) -> Int32), Int32) : Int32
     end
     STR
+end
+
+it "to_s a def with a block with empty domain" do
+  sr = semantic %(
+    private def without_stop(&block : -> T)
+      block
+    end
+    )
+  sr.node.to_s.should eq <<-STR
+    private def without_stop(&block : (-> T))
+      block
+    end
+    STR
+end
+
+it "find what's up" do
+  s = %(
+    require "nil"
+    nil
+    )
+  without_cleanup = semantic s, inject_primitives: false, cleanup: false
+  with_cleanup = semantic s, inject_primitives: false, cleanup: true
+
+  without_cleanup.node.to_s.should eq with_cleanup.node.to_s
 end

@@ -462,6 +462,14 @@ class Crystal::Command
         end
       end
 
+      opts.on("--no-cleanup", "Do not perform the cleanup process of semantic") do
+        compiler.no_cleanup = true
+      end
+
+      opts.on("--expand", "Write file with the result of semantic as 'output-expanded.cr'") do
+        compiler.expand = true
+      end
+
       opts.on("--stdin-filename ", "Source file name to be read from STDIN") do |stdin_filename|
         has_stdin_filename = true
         filenames << stdin_filename
