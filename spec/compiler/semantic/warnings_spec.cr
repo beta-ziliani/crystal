@@ -647,6 +647,69 @@ describe "Semantic: warnings" do
           CR
       end
 
+      it "exact match with unrestricted parameter" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32); end
+            def foo(y); end
+          end
+          CR
+      end
+
+      it "exact match defined in module" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32)
+          end
+
+          module FooM
+            def foo(x : Int32); end
+          end
+
+          class Bar < Foo
+            include FooM
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
+      it "exact match defined in class in middle of hierarchy" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32)
+          end
+
+          class FooM < Foo
+            def foo(x : Int32); end
+          end
+
+          class Bar < FooM
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
+      it "exact match of abstract def in module" do
+        warnings_result(<<-CR).should be_empty
+          module Foo
+            abstract def foo(x : Int32)
+          end
+
+          class FooM
+            def foo(x : Int32); end
+          end
+
+          class Bar < FooM
+  	        include Foo
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
       it "contravariant restrictions" do
         warnings_result(<<-CR).should be_empty
           abstract class Foo
@@ -724,6 +787,23 @@ describe "Semantic: warnings" do
           class Bar < Foo
             def foo(x : Int32, **opts); end
             def foo(z : Int32, *, y); end
+          end
+          CR
+      end
+
+      it "inexact match defined in module" do
+        assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+          abstract class Foo
+            abstract def foo(x : Int32 | String)
+          end
+
+          module FooM
+            def foo(y : Int32 | String); end
+          end
+          
+          class Bar < Foo
+            include FooM
+            def foo(x : Int32); end
           end
           CR
       end
