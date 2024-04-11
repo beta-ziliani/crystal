@@ -1,4 +1,4 @@
-require "weak_ref"
+require "crystal/weak_hash"
 
 # Used in `Log.setup` methods to configure the binding to be used.
 module Log::Configuration
@@ -13,7 +13,7 @@ class Log::Builder
   include Configuration
 
   @mutex = Mutex.new(:unchecked)
-  @logs = Hash(String, WeakRef(Log)).new
+  @logs = Crystal::WeakHash(String, Log).new
 
   private record Binding, source : String, level : Severity, backend : Backend
   @bindings = Array(Binding).new
@@ -68,7 +68,7 @@ class Log::Builder
   # the same object.
   def for(source : String) : Log
     @mutex.synchronize do
-      log = @logs[source]?.try &.value
+      log = @logs[source]?
 
       if log.nil?
         log = Log.new(source, nil, :none)
@@ -76,7 +76,7 @@ class Log::Builder
           next unless Builder.matches(log.source, binding.source)
           append_backend(log, binding.level, binding.backend)
         end
-        @logs[source] = WeakRef.new(log)
+        @logs[source] = log
       end
 
       log
@@ -85,11 +85,8 @@ class Log::Builder
 
   # :nodoc:
   private def each_log(&)
-    @logs.reject! { |_, log_ref| log_ref.value.nil? }
-
-    @logs.each_value do |log_ref|
-      log = log_ref.value
-      yield log if log
+    @logs.each_value do |log|
+      yield log
     end
   end
 
