@@ -2579,6 +2579,16 @@ module Crystal
       end
     end
 
+    describe "macro while methods" do
+      it "executes cond" do
+        assert_macro %({{x.cond}}), "true", {x: MacroWhile.new(BoolLiteral.new(true), NilLiteral.new)}
+      end
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "\"test\"", {x: MacroWhile.new(BoolLiteral.new(true), StringLiteral.new("test"))}
+      end
+    end
+
     describe "macro for methods" do
       it "executes vars" do
         assert_macro %({{x.vars}}), "[bar]", {x: MacroFor.new([Var.new("bar")], Var.new("foo"), Call.new(nil, "puts", [Var.new("bar")] of ASTNode))}

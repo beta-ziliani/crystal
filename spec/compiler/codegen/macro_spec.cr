@@ -85,6 +85,30 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
+  it "expands inline macro while (false)" do
+    run(%(
+      a = 0
+      {% while 1 == 2 %}
+        a &+= {{i}}
+      {% end %}
+      a
+      )).to_i.should eq(0)
+  end
+
+  it "expands inline macro while (iteration)" do
+    run(%(
+      a = 0
+      {% begin %}
+        {% x = 0 %}
+        {% while x < 5 %}
+          a &+= {{x}}
+          {% x += 1 %}
+        {% end %}
+      {% end %}
+      a
+      )).to_i.should eq(10)
+  end
+
   it "expands inline macro if (true)" do
     run(%(
       a = 0
