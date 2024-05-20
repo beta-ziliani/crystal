@@ -2282,6 +2282,30 @@ module Crystal
     def_equals_and_hash @vars, @exp, @body
   end
 
+  # while inside a macro:
+  #
+  #    {% while cond %}
+  #      body
+  #    {% end %}
+  class MacroWhile < ASTNode
+    property cond : ASTNode
+    property body : ASTNode
+
+    def initialize(@cond, @body)
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor
+      @body.accept visitor
+    end
+
+    def clone_without_location
+      MacroWhile.new(@cond.clone, @body.clone)
+    end
+
+    def_equals_and_hash @cond, @body
+  end
+
   # A uniquely named variable inside a macro (like %var)
   class MacroVar < ASTNode
     property name : String

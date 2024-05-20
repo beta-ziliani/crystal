@@ -750,7 +750,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when MacroExpression
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, existed, enum_type, previous_counter)
-    when MacroFor
+    when MacroFor, MacroWhile
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, existed, enum_type, previous_counter)
     when Expressions

@@ -3344,6 +3344,22 @@ module Crystal
       next_token_skip_space_or_newline
 
       case @token.value
+      when Keyword::WHILE
+        next_token_skip_space
+
+        cond = parse_expression_inside_macro
+
+        check :OP_PERCENT_RCURLY
+
+        macro_state.control_nest += 1
+        body, end_location = parse_macro_body(start_location, macro_state)
+        macro_state.control_nest -= 1
+
+        check_ident :end
+        next_token_skip_space
+        check :OP_PERCENT_RCURLY
+
+        return MacroWhile.new(cond, body).at_end(token_end_location)
       when Keyword::FOR
         next_token_skip_space
 

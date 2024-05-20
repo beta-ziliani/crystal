@@ -2149,6 +2149,58 @@ module Crystal
       false
     end
 
+    def visit(node : MacroWhile)
+      reset_macro_state
+      old_macro_state = @macro_state
+
+      if inside_macro?
+        check :MACRO_CONTROL_START
+      else
+        check :OP_LCURLY_PERCENT
+      end
+
+      write_macro_slashes
+      write "{% "
+
+      next_token_skip_space_or_newline
+
+      write_keyword :while, " "
+
+      outside_macro { indent(@column, node.cond) }
+      skip_space_or_newline
+
+      check :OP_PERCENT_RCURLY
+      write " %}"
+
+      @macro_state.control_nest += 1
+      check_macro_whitespace
+
+      macro_node_line = @line
+      next_macro_token
+      format_macro_contents(node.body, macro_node_line)
+
+      @macro_state = old_macro_state
+
+      check :MACRO_CONTROL_START
+      next_token_skip_space_or_newline
+
+      check_end
+      next_token_skip_space_or_newline
+      check :OP_PERCENT_RCURLY
+
+      write_macro_slashes
+      write "{% end %}"
+
+      if inside_macro?
+        check_macro_whitespace
+        next_macro_token
+      else
+        next_token
+      end
+
+      false
+    end
+
     def visit(node : MacroVar)
       check :MACRO_VAR
       write "%"

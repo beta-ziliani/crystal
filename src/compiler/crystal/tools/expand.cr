@@ -84,7 +84,7 @@ module Crystal
         # Re-indentation is needed for `MacroIf` and `MacroFor`, because they have
         # `MacroBody`, which is sub string of source code, in other words they may
         # contain source code's indent.
-        return source unless node.is_a?(MacroIf) || node.is_a?(MacroFor)
+        return source unless node.is_a?(MacroIf | MacroFor | MacroWhile)
 
         indent = node.location.not_nil!.column_number - 1
         source.lines(chomp: false).map do |line|
@@ -182,7 +182,7 @@ module Crystal
       end
     end
 
-    def transform(node : MacroFor | MacroIf | MacroExpression)
+    def transform(node : MacroFor | MacroIf | MacroExpression | MacroWhile)
       if expanded = node.expanded
         self.expanded = true
         expanded

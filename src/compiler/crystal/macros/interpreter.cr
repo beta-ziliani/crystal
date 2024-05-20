@@ -182,6 +182,17 @@ module Crystal
       false
     end
 
+    def visit(node : MacroWhile)
+      node.cond.accept self
+
+      if @last.truthy?
+        node.body.accept self
+        node.accept self
+      else
+        false
+      end
+    end
+
     def visit(node : MacroFor)
       node.exp.accept self
 

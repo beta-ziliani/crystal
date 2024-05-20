@@ -768,6 +768,17 @@ module Crystal
       false
     end
 
+    def visit(node : MacroWhile)
+      @str << "{% while "
+      node.cond.accept self
+      @str << " %}"
+      inside_macro do
+        node.body.accept self
+      end
+      @str << "{% end %}"
+      false
+    end
+
     def visit(node : MacroVar)
       @str << '%'
       @str << node.name

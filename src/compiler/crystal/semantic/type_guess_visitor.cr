@@ -1301,6 +1301,10 @@ module Crystal
       @outside_def ? super : false
     end
 
+    def visit(node : MacroWhile)
+      @outside_def ? super : false
+    end
+
     def gather_returns(node)
       gatherer = ReturnGatherer.new
       node.accept gatherer

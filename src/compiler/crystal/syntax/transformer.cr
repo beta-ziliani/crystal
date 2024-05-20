@@ -586,6 +586,10 @@ module Crystal
       node
     end
 
+    def transform(node : MacroWhile)
+      node
+    end
+
     def transform(node : MacroVar)
       node
     end

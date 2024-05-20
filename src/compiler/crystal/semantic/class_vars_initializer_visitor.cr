@@ -129,7 +129,7 @@ module Crystal
       when TypeDeclaration
         node.var.is_a?(ClassVar)
       when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require,
-           MacroExpression, MacroIf, MacroFor, VisibilityModifier
+           MacroExpression, MacroIf, MacroFor, MacroWhile, VisibilityModifier
         true
       else
         false
